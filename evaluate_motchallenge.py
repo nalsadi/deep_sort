@@ -2,7 +2,7 @@
 import argparse
 import os
 import deep_sort_app
-
+import numpy as np
 
 def parse_args():
     """ Parse command line arguments.
@@ -51,4 +51,4 @@ if __name__ == "__main__":
         deep_sort_app.run(
             sequence_dir, detection_file, output_file, args.min_confidence,
             args.nms_max_overlap, args.min_detection_height,
-            args.max_cosine_distance, args.nn_budget, display=False)
+            args.max_cosine_distance, args.nn_budget, display=False,delta = np.array([5e1000000,5e1000000,5e1000000,5e1000000]))

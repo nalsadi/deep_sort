@@ -151,7 +151,7 @@ class KalmanFilter(object):
             self._update_mat, covariance, self._update_mat.T))
         return mean, covariance + innovation_cov
 
-    def update(self, mean, covariance, measurement):
+    def update_old(self, mean, covariance, measurement):
         """Run Kalman filter correction step.
 
         Parameters
@@ -183,6 +183,67 @@ class KalmanFilter(object):
         new_mean = mean + np.dot(innovation, kalman_gain.T)
         new_covariance = covariance - np.linalg.multi_dot((
             kalman_gain, projected_cov, kalman_gain.T))
+        return new_mean, new_covariance
+
+    def sigmoid_saturation(self, innov, delta, alpha=0.4):
+        """
+        Sigmoid saturation function for SSIF.
+        
+        Parameters
+        ----------
+        innov : ndarray
+            Innovation vector
+        delta : ndarray
+            Sliding layer widths
+        alpha : float
+            Sigmoid steepness parameter (default: 1.23)
+        
+        Returns
+        -------
+        ndarray
+            Saturation terms based on sigmoid function
+        """
+        return 1 / (1 + np.exp(-alpha * (np.abs(innov) - delta)))
+
+    def update(self, mean, covariance, measurement, delta):
+        """
+        Enhanced State-Independent Filter (ESIF) update with sigmoid saturation.
+
+        Parameters
+        ----------
+        mean : ndarray
+            The predicted state's mean vector (8 dimensional).
+        covariance : ndarray
+            The state's covariance matrix (8x8 dimensional).
+        measurement : ndarray
+            The 4 dimensional measurement vector (x, y, a, h).
+        delta : ndarray
+            Sliding layer widths for sigmoid saturation.
+
+        Returns
+        -------
+        (ndarray, ndarray)
+            Returns the measurement-corrected state distribution.
+        """
+        projected_mean, projected_cov = self.project(mean, covariance)
+        innovation = measurement - projected_mean
+
+        # Calculate standard Kalman gain
+        chol_factor, lower = scipy.linalg.cho_factor(
+            projected_cov, lower=True, check_finite=False)
+        kalman_gain = scipy.linalg.cho_solve(
+            (chol_factor, lower), np.dot(covariance, self._update_mat.T).T,
+            check_finite=False).T
+
+        # Apply sigmoid saturation
+        sat = self.sigmoid_saturation(innovation, delta)
+        sat = 1
+        modified_gain = kalman_gain * sat
+
+        new_mean = mean + np.dot(innovation, modified_gain.T)
+        new_covariance = covariance - np.linalg.multi_dot((
+            modified_gain, projected_cov, modified_gain.T))
+        
         return new_mean, new_covariance
 
     def gating_distance(self, mean, covariance, measurements,

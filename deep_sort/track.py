@@ -123,7 +123,7 @@ class Track:
         self.age += 1
         self.time_since_update += 1
 
-    def update(self, kf, detection):
+    def update(self, kf, detection,delta):
         """Perform Kalman filter measurement update step and update the feature
         cache.
 
@@ -136,7 +136,7 @@ class Track:
 
         """
         self.mean, self.covariance = kf.update(
-            self.mean, self.covariance, detection.to_xyah())
+            self.mean, self.covariance, detection.to_xyah(),delta)
         self.features.append(detection.feature)
 
         self.hits += 1
