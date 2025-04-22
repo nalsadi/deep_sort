@@ -134,3 +134,14 @@ If you find this repo useful in your research, please consider citing the follow
       organization={IEEE},
       doi={10.1109/WACV.2018.00087}
     }
+
+
+
+python evaluate_motchallenge.py `
+>>   --mot_dir "C:\Users\nalsa\Desktop\DeepSort\deep_sort\MOT16\train" `
+>>   --detection_dir "resources\detections\MOT16_POI_train" `
+>>   --output_dir "outputs"
+>> 
+
+python -m motmetrics.apps.evaluateTracking MOT16/train outputs seqmaps/seqmap.txt
+
